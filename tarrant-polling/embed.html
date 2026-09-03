@@ -711,7 +711,7 @@ html,body{margin:0;height:100%;font-family:var(--sans);color:var(--ink);backgrou
 /* ---------- panels ---------- */
 .pnl{position:absolute;z-index:800;background:var(--panel);border:1px solid var(--line);
   border-radius:4px;box-shadow:0 2px 10px rgba(16,32,58,.14)}
-#ctl{top:64px;left:12px;width:224px;padding:11px 12px}
+#ctl{top:64px;left:12px;width:224px;padding:11px 12px;z-index:860}
 #det{top:64px;right:12px;width:308px;max-height:calc(100% - 128px);overflow:auto;padding:12px 13px}
 .pnl h2{margin:0 0 7px;font-size:9.5px;text-transform:uppercase;letter-spacing:1.1px;
   color:var(--mute);font-weight:700}
@@ -771,8 +771,11 @@ html,body{margin:0;height:100%;font-family:var(--sans);color:var(--ink);backgrou
 .mk{border-radius:50%;border:1.5px solid #fff;box-shadow:0 0 0 1px rgba(16,32,58,.35)}
 @media (max-width:820px){
   #hdr .kpis{display:none}
-  #ctl{top:auto;bottom:12px;left:12px;right:12px;width:auto;max-height:46%;overflow:auto}
-  #det{top:auto;bottom:12px;left:12px;right:12px;width:auto;max-height:52%}
+  /* both panels dock to the bottom edge; filters win the stack when open */
+  #ctl{top:auto;bottom:12px;left:12px;right:12px;width:auto;max-height:52%;
+    overflow:auto;z-index:860}
+  #det{top:auto;bottom:12px;left:12px;right:12px;width:auto;max-height:52%;z-index:820}
+  #lg{z-index:600}
 }
 </style></head><body>
 <div id="wrap">
