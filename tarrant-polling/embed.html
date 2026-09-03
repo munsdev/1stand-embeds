@@ -684,188 +684,139 @@ svg.leaflet-image-layer.leaflet-interactive path {
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;font-family:var(--sans);color:var(--ink);background:var(--bg)}
-#wrap{position:relative;height:100%;min-height:520px;display:flex;flex-direction:column;
-  overflow:hidden;background:#fff}
-/* The stage is a fixed box. The map fills it and never resizes; the detail
-   panel floats over it, the way Google Maps and Zillow handle this. */
-#stage{position:relative;flex:1 1 auto;min-height:0;overflow:hidden}
-#map{position:absolute;top:0;right:0;bottom:0;left:0}
+#wrap{position:relative;height:100%;min-height:520px;overflow:hidden}
+#map{position:absolute;inset:0}
 .leaflet-container{background:#ECEFF1;font-family:var(--sans)}
+/* Mute the OSM basemap so the choropleth reads on top of it.
+   Remove this rule for full-colour standard OSM. */
+.leaflet-tile-pane{filter:grayscale(.92) brightness(1.06) contrast(.92);opacity:.85}
 
-/* ---------- top bar ---------- */
-#hdr{background:var(--ink);color:#fff;padding:10px 14px;display:flex;align-items:center;
-  gap:14px;flex-wrap:wrap;flex:none}
+/* ---------- header ---------- */
+#hdr{position:absolute;top:0;left:0;right:0;z-index:900;background:var(--ink);
+  color:#fff;padding:9px 14px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 #hdr h1{margin:0;font-size:14px;font-weight:700;letter-spacing:.2px;line-height:1.25}
-#hdr h1 span{display:block;font-size:11px;font-weight:400;color:#B3B5B5;letter-spacing:.3px}
-.kpis{display:flex;gap:14px;margin-left:auto;flex-wrap:wrap}
+#hdr h1 span{display:block;font-size:10.5px;font-weight:400;color:#B3B5B5;letter-spacing:.3px}
+.kpis{display:flex;gap:12px;margin-left:auto;flex-wrap:wrap}
 .kpi{text-align:right;line-height:1.15}
-.kpi b{display:block;font-size:17px;font-weight:700}
-.kpi i{font-style:normal;font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:#B3B5B5}
-.kpi.neg b{color:#E45E4F} .kpi.pos b{color:#69CFD8}
-#fs{text-decoration:none;display:inline-flex;align-items:center;gap:6px;background:transparent;color:#fff;
-  border:1px solid #ffffff40;padding:6px 11px;font:inherit;font-size:12px;cursor:pointer;
-  white-space:nowrap;flex:none}
-#fs:hover{border-color:#fff;background:#ffffff14}
-#fs svg{flex:none}
-:fullscreen #wrap,:-webkit-full-screen #wrap{height:100vh}
+.kpi b{display:block;font-size:16px;font-weight:700}
+.kpi i{font-style:normal;font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:#B3B5B5}
+.kpi.neg b{color:#E45E4F} .kpi.pos b{color:#8FCF77}
 
-/* ---------- controls: a bar, not an overlay ---------- */
-#ctl{flex:none;background:var(--wash);border-bottom:1px solid var(--line);
-  padding:9px 14px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-#ctl2{flex:none;background:var(--wash);border-bottom:1px solid var(--line);
-  padding:0 14px 9px;display:none;position:relative}
-.grp{display:flex;align-items:center;gap:7px}
-.grp>label{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--mute);
-  font-weight:700;white-space:nowrap}
-.seg{display:flex;border:1px solid var(--ink);overflow:hidden}
-.seg button{border:0;background:#fff;padding:5px 11px;font:inherit;font-size:12px;
-  cursor:pointer;color:var(--ink2);white-space:nowrap}
-.seg button+button{border-left:1px solid var(--ink)}
-.seg button[aria-pressed=true]{background:var(--ink);color:#fff;font-weight:700}
-.opt{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink2);
-  cursor:pointer;white-space:nowrap}
+/* ---------- panels ---------- */
+.pnl{position:absolute;z-index:800;background:var(--panel);border:1px solid var(--line);
+  border-radius:4px;box-shadow:0 2px 10px rgba(16,32,58,.14)}
+#ctl{top:64px;left:12px;width:224px;padding:11px 12px}
+#det{top:64px;right:12px;width:308px;max-height:calc(100% - 128px);overflow:auto;padding:12px 13px}
+.pnl h2{margin:0 0 7px;font-size:9.5px;text-transform:uppercase;letter-spacing:1.1px;
+  color:var(--mute);font-weight:700}
+.pnl h2:not(:first-child){margin-top:13px;padding-top:11px;border-top:1px solid var(--line)}
+
+.seg{display:flex;border:1px solid var(--line);border-radius:3px;overflow:hidden}
+.seg button{flex:1;border:0;background:#fff;padding:6px 4px;font:inherit;font-size:11px;
+  cursor:pointer;color:var(--ink2)}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed=true]{background:var(--ink);color:#fff;font-weight:600}
+
+.opt{display:flex;align-items:center;gap:7px;padding:3.5px 0;font-size:11.5px;
+  color:var(--ink2);cursor:pointer}
 .opt input{margin:0;cursor:pointer;accent-color:#d91a04}
-.opt .sw{width:11px;height:11px;flex:none;border:1px solid rgba(0,0,0,.2)}
-.opt .ct{font-size:11px;color:var(--mute);font-variant-numeric:tabular-nums}
-#search{width:180px;padding:5px 9px;border:1px solid var(--ink);font:inherit;font-size:12px;
-  background:#fff}
-#results,#results2{position:absolute;z-index:900;background:#fff;border:1px solid var(--ink);
-  max-height:210px;overflow:auto;width:300px;display:none;box-shadow:0 4px 14px rgba(2,9,10,.2)}
-#results div,#results2 div{padding:6px 9px;font-size:12px;cursor:pointer;line-height:1.35;
-  border-bottom:1px solid var(--line)}
-#results div:hover,#results2 div:hover{background:var(--wash)}
-#results .z,#results2 .z{color:var(--mute);font-size:11px}
-#search2{width:100%;padding:8px 10px;border:1px solid var(--ink);font:inherit;font-size:16px;background:#fff}
-#results2{width:calc(100% - 28px)}
+.opt .sw{width:11px;height:11px;border-radius:2px;flex:none;border:1px solid rgba(0,0,0,.18)}
+.opt .ct{margin-left:auto;font-size:10px;color:var(--mute);font-variant-numeric:tabular-nums}
 
-/* ---------- legend, the only thing left on the map ---------- */
-#lg{position:absolute;left:10px;bottom:10px;z-index:600;background:rgba(255,255,255,.95);
-  border:1px solid var(--ink);padding:8px 10px;font-size:11px;color:var(--ink2)}
-#lg .ttl{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--mute);
+#search{width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:3px;
+  font:inherit;font-size:11.5px}
+#results{max-height:150px;overflow:auto;margin-top:5px}
+#results div{padding:4px 6px;font-size:11px;border-radius:2px;cursor:pointer;line-height:1.3}
+#results div:hover{background:#f2f5f8}
+#results .z{color:var(--mute);font-size:10px}
+
+/* ---------- legend ---------- */
+#lg{position:absolute;left:12px;bottom:12px;z-index:800;background:var(--panel);
+  border:1px solid var(--line);border-radius:4px;padding:9px 11px;font-size:10px;
+  color:var(--ink2);box-shadow:0 2px 10px rgba(16,32,58,.14)}
+#lg .ttl{font-size:9.5px;text-transform:uppercase;letter-spacing:1px;color:var(--mute);
   font-weight:700;margin-bottom:5px}
-#lgramp{display:flex;height:11px;width:180px;overflow:hidden}
+#lgramp{display:flex;height:11px;width:190px;border-radius:2px;overflow:hidden}
 #lgramp i{flex:1}
-#lgticks{display:flex;justify-content:space-between;width:180px;margin-top:3px;
-  font-variant-numeric:tabular-nums;font-size:10px}
+#lgticks{display:flex;justify-content:space-between;width:190px;margin-top:3px;
+  font-variant-numeric:tabular-nums}
 
-/* ---------- detail: a drawer under the map ---------- */
-/* Detail panel: side drawer on desktop, bottom sheet on phones. Overlays the
-   map, so nothing behind it ever moves. */
-#det{flex:0 0 180px;height:180px;background:#fff;border-top:2px solid var(--ink);
-  overflow-y:auto;overflow-x:hidden;padding:11px 16px 14px;
-  -webkit-overflow-scrolling:touch;position:relative}
-#detclose{position:sticky;float:right;top:0;margin:-4px -4px 0 8px;border:1px solid var(--line);background:#fff;
-  font:inherit;font-size:11px;padding:3px 9px;cursor:pointer;color:var(--ink2)}
-#detclose:hover{border-color:var(--ink);color:var(--ink)}
-#det .hd{font-size:17px;font-weight:700;line-height:1.2;padding-right:70px}
-#det .sub{font-size:12px;color:var(--mute);margin-bottom:9px}
-.stat{display:flex;gap:8px;margin:9px 0}
-.stat div{flex:1;background:var(--wash);border:1px solid var(--line);padding:7px 8px;text-align:center}
-.stat b{display:block;font-size:17px;line-height:1.1}
-.stat i{font-style:normal;font-size:10px;text-transform:uppercase;letter-spacing:.7px;color:var(--mute)}
-.lst{margin:6px 0 0;padding:0;list-style:none;
-  display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0 18px}
-.lst li{padding:6px 0;border-top:1px solid var(--line);font-size:12px;line-height:1.4}
-.lst li .nm{font-weight:700;color:var(--ink)}
-.lst li .ad{color:var(--mute);font-size:11px}
-.tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.5px;
-  text-transform:uppercase;padding:1px 6px;margin-right:5px;vertical-align:1px}
+/* ---------- detail ---------- */
+#det .hd{font-size:17px;font-weight:700;line-height:1.15}
+#det .sub{font-size:11px;color:var(--mute);margin-bottom:9px}
+.stat{display:flex;gap:8px;margin:8px 0}
+.stat div{flex:1;background:#f4f6f9;border-radius:3px;padding:6px 8px;text-align:center}
+.stat b{display:block;font-size:16px;line-height:1.1}
+.stat i{font-style:normal;font-size:8.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--mute)}
+.lst{margin:4px 0 0;padding:0;list-style:none}
+.lst li{padding:5px 0;border-top:1px solid var(--line);font-size:11px;line-height:1.35}
+.lst li .nm{font-weight:600;color:var(--ink)}
+.lst li .ad{color:var(--mute);font-size:10px}
+.tag{display:inline-block;font-size:8.5px;font-weight:700;letter-spacing:.5px;
+  text-transform:uppercase;padding:1px 5px;border-radius:2px;margin-right:5px;vertical-align:1px}
 .t-closed{background:#FBE8E5;color:#AD1403}
-.t-added{background:#D4F1F4;color:#104A50}
+.t-added{background:#E8F5E0;color:#2d7a10}
 .t-kept{background:#ECEFF1;color:#4D5253}
 .t-hi{background:#FBF1CC;color:#5F4A00}
-.hint{font-size:12px;color:var(--mute);line-height:1.5}
-.note{font-size:11px;color:var(--mute);line-height:1.5;margin-top:10px;
-  padding-top:8px;border-top:1px solid var(--line)}
+.hint{font-size:10.5px;color:var(--mute);line-height:1.45}
+.note{font-size:9.5px;color:var(--mute);line-height:1.45;margin-top:11px;
+  padding-top:9px;border-top:1px solid var(--line)}
 .note a{color:var(--ink2)}
-.mk{border-radius:50%}
-@media (max-width:900px){
-  #hdr{padding:9px 12px;gap:10px}
-  #hdr h1{font-size:13px}
-  #hdr .kpis{display:none}
-  .grp>label{display:none}
-  #ctl{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;gap:12px;padding:8px 12px;
-    -webkit-overflow-scrolling:touch;scrollbar-width:none}
-  #ctl::-webkit-scrollbar{display:none}
-  .grp{flex:none}
-  .grp:last-child{display:none}          /* search moves to its own row */
-  #ctl2{display:block}
-  #ctl2 #search{width:100%;padding:8px 10px;font-size:16px}  /* 16px stops iOS zoom */
-  #results{width:calc(100% - 28px);left:14px;right:14px}
-  .seg button{padding:8px 12px}
-  .opt{padding:4px 0}
-  .opt input{width:17px;height:17px}
-  #lg{left:8px;top:8px;bottom:auto;padding:6px 8px}
-  #lgramp,#lgticks{width:132px}
-  #det{flex-basis:170px;height:170px;padding:10px 13px 14px}
-  #det .hd{font-size:16px}
-  .lst{grid-template-columns:1fr}
-}
-@media (max-width:420px){
-  #lg{display:none}                      /* legend crowds a small map */
-  #hdr h1 span{display:none}
-}
-@media (max-height:560px){
-  #det{flex-basis:140px;height:140px}
+.mk{border-radius:50%;border:1.5px solid #fff;box-shadow:0 0 0 1px rgba(16,32,58,.35)}
+@media (max-width:820px){
+  #ctl{width:190px} #det{display:none} #hdr .kpis{display:none}
 }
 </style></head><body>
 <div id="wrap">
+  <div id="map"></div>
 
   <div id="hdr">
     <h1>Tarrant County polling sites, 2022 to 2026
-      <span>149 Election Day sites closed, 56 opened. The reported 92 is the net.</span></h1>
+      <span>149 Election Day sites closed, 56 opened. The reported figure of 92 is the net.</span></h1>
     <div class="kpis" id="kpis"></div>
-    <a id="fs" href="./embed.html" target="_blank" rel="noopener" title="Full screen">
-      <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path fill="currentColor"
-        d="M1 1h6v2H3v4H1V1zm14 0v6h-2V3H9V1h6zM1 9h2v4h4v2H1V9zm12 0h2v6H9v-2h4V9z"/></svg>
-      <span id="fslabel">Full screen</span>
-    </a>
   </div>
 
-  <div id="ctl">
-    <div class="grp"><label>Programme</label>
-      <div class="seg" id="prog">
-        <button data-v="ed" aria-pressed="true">Election Day</button>
-        <button data-v="ev" aria-pressed="false">Early voting</button>
-      </div>
+  <div class="pnl" id="ctl">
+    <h2>Programme</h2>
+    <div class="seg" id="prog">
+      <button data-v="ed" aria-pressed="true">Election Day</button>
+      <button data-v="ev" aria-pressed="false">Early voting</button>
     </div>
-    <div class="grp"><label>Shade by</label>
-      <div class="seg" id="metric">
-        <button data-v="frac" aria-pressed="true">Share lost</button>
-        <button data-v="net" aria-pressed="false">Net change</button>
-        <button data-v="y26" aria-pressed="false">Remaining</button>
-      </div>
+
+    <h2>Shade ZIP areas by</h2>
+    <div class="seg" id="metric" style="flex-direction:column">
+      <button data-v="frac" aria-pressed="true">Share of sites lost</button>
+      <button data-v="net" aria-pressed="false">Net change</button>
+      <button data-v="y26" aria-pressed="false">Sites remaining, 2026</button>
     </div>
-    <div class="grp">
-      <label class="opt"><input type="checkbox" id="c-closed" checked>
-        <span class="sw" style="background:#d91a04"></span>Closed<span class="ct" id="n-closed"></span></label>
-      <label class="opt"><input type="checkbox" id="c-added" checked>
-        <span class="sw" style="background:#3FA818"></span>Added<span class="ct" id="n-added"></span></label>
-      <label class="opt"><input type="checkbox" id="c-kept">
-        <span class="sw" style="background:#808484"></span>Retained<span class="ct" id="n-kept"></span></label>
-      <label class="opt"><input type="checkbox" id="c-hi">
-        <span class="sw" style="background:#efbb00"></span>Colleges<span class="ct" id="n-hi"></span></label>
-    </div>
-    <div class="grp" style="position:relative;margin-left:auto">
-      <input id="search" placeholder="Find a site...">
-      <div id="results"></div>
-    </div>
+
+    <h2>Show sites</h2>
+    <label class="opt"><input type="checkbox" id="c-closed" checked>
+      <span class="sw" style="background:#9a3412"></span>Closed<span class="ct" id="n-closed"></span></label>
+    <label class="opt"><input type="checkbox" id="c-added" checked>
+      <span class="sw" style="background:#2f6d3a"></span>Added<span class="ct" id="n-added"></span></label>
+    <label class="opt"><input type="checkbox" id="c-kept">
+      <span class="sw" style="background:#98a6b6"></span>Retained<span class="ct" id="n-kept"></span></label>
+    <label class="opt"><input type="checkbox" id="c-hi">
+      <span class="sw" style="background:#f59e0b"></span>Colleges only<span class="ct" id="n-hi"></span></label>
+    <div class="hint" id="ptnote" style="margin-top:6px"></div>
+
+    <h2>Find a site</h2>
+    <input id="search" placeholder="Church, school, library...">
+    <div id="results"></div>
   </div>
 
-  <div id="ctl2">
-    <input id="search2" placeholder="Find a site...">
-    <div id="results2"></div>
-  </div>
+  <div class="pnl" id="det"></div>
 
-  <div id="stage">
-    <div id="map"></div>
-    <div id="lg">
-      <div class="ttl" id="lgttl">Share of 2022 sites lost</div>
-      <div id="lgramp"></div>
-      <div id="lgticks"></div>
+  <div id="lg">
+    <div class="ttl" id="lgttl">Share of 2022 sites lost</div>
+    <div id="lgramp"></div>
+    <div id="lgticks"></div>
+    <div style="margin-top:7px;display:flex;align-items:center;gap:6px">
+      <span style="width:11px;height:11px;background:#cfe0d3;border:1px solid #b9c4d1;
+        border-radius:2px;display:inline-block"></span>No sites in 2022
     </div>
   </div>
-  <div id="det"></div>
 </div>
 
 <script>
@@ -874,7 +825,7 @@ var D = {"zips":{"75050":{"city":"Grand Prairie","ed":{"y22":1,"y26":1},"ev":{"y
 /* ---------------- helpers ---------------- */
 var RAMP = ['#FCFCFD','#FBE8E5','#F7D1CC','#E45E4F','#d91a04','#560A01'];
 var DIV  = ['#2d7a10','#8FCF77','#E5E9EC','#F7D1CC','#E45E4F','#d91a04','#560A01'];
-var state = {prog:'ed', metric:'frac', closed:true, added:true, kept:false, hi:false, sel:null, site:null};
+var state = {prog:'ed', metric:'frac', closed:true, added:true, kept:false, hi:false, sel:null};
 
 function agg(z,p){ return D.zips[z] ? D.zips[z][p] : {y22:0,y26:0}; }
 function sitesIn(z,p){ return D.sites.filter(function(s){return s.z===z && s.p===p;}); }
@@ -955,19 +906,14 @@ function drawPoints(){
     if(state.hi && !s.h) return;
     var c = D.coords[siteKey(s)];
     if(!c) return;
-    var mk = L.circleMarker([c[0],c[1]],{radius:r,className:'mk',fillColor:COL[s.s],
-      fillOpacity:.92,color:'#fff',weight:1.4,pane:'pins'});
-    mk.on('click', function(e){ L.DomEvent.stop(e); selectSite(s); });
-    mk.addTo(ptLayer);
+    L.circleMarker([c[0],c[1]],{radius:r,className:'mk',fillColor:COL[s.s],
+      fillOpacity:.92,color:'#fff',weight:1.4,pane:'pins'})
+     .bindPopup('<b>'+s.n+'</b><br>'+s.a+'<br>'+s.c+' '+s.z+
+                '<br><span class="tag t-'+s.s+'">'+s.s+'</span>')
+     .addTo(ptLayer);
   });
 }
 map.on('zoomend',drawPoints);
-(function(){
-  var t;
-  function resize(){ clearTimeout(t); t=setTimeout(function(){ map.invalidateSize(); }, 150); }
-  window.addEventListener('resize', resize);
-  window.addEventListener('orientationchange', resize);
-})();
 map.createPane('pins');
 map.getPane('pins').style.zIndex=640;
 
@@ -992,35 +938,6 @@ function renderKPIs(){
     D.sites.filter(function(s){return s.p===state.prog&&s.h;}).length;
 }
 
-function panel(html, withClose){
-  var d = document.getElementById('det');
-  d.innerHTML = (withClose === false ? '' : '<button id="detclose">Back</button>') + html;
-  d.scrollTop = 0;
-  var b = document.getElementById('detclose');
-  if(b) b.onclick = function(){ closePanel(); };
-}
-function clearSel(){
-  state.sel = null; state.site = null;
-  zipLayer.eachLayer(function(l){ zipLayer.resetStyle(l); });
-}
-function closePanel(){ clearSel(); overview(); }
-function selectSite(s){
-  state.site = s;
-  var a = agg(s.z, s.p);
-  var prog = s.p === 'ed' ? 'Election Day' : 'Early voting';
-  panel(
-    '<div class="hd">' + s.n + '</div>' +
-    '<div class="sub">' + s.a + ', ' + s.c + ' ' + s.z + '</div>' +
-    '<div style="margin:2px 0 10px"><span class="tag t-' + s.s + '">' + s.s + '</span>' +
-    (s.h ? '<span class="tag t-hi">college</span>' : '') +
-    '<span style="font-size:12px;color:#808484">' + prog + '</span></div>' +
-    '<div class="hint">ZIP ' + s.z + ' went from <b>' + a.y22 + '</b> sites in 2022 to <b>' +
-    a.y26 + '</b> in 2026.</div>' +
-    '<div class="note"><a href="#" id="backzip">See all sites in ' + s.z + '</a></div>'
-  );
-  var b = document.getElementById('backzip');
-  if(b) b.onclick = function(e){ e.preventDefault(); select(s.z); };
-}
 function li(s){
   return '<li><span class="tag t-'+s.s+'">'+s.s+'</span>'+
     (s.h?'<span class="tag t-hi">college</span>':'')+
@@ -1030,7 +947,7 @@ function overview(){
   var t=countyTotals(state.prog), y22=t.closed+t.kept, y26=t.added+t.kept;
   var lbl = state.prog==='ed' ? 'Election Day' : 'Early voting';
   var hi = D.sites.filter(function(s){return s.p===state.prog&&s.h&&s.s==='closed';});
-  var html =
+  document.getElementById('det').innerHTML =
     '<div class="hd">Tarrant County</div>'+
     '<div class="sub">'+lbl+' polling sites</div>'+
     '<div class="stat"><div><b>'+y22+'</b><i>2022</i></div>'+
@@ -1043,11 +960,11 @@ function overview(){
       hi.map(li).join('')+'</ul>' : '')+
     '<div class="note">Click any ZIP area for its site list. Tarrant uses countywide vote '+
     'centers, so any voter may use any site: shading shows where capacity was withdrawn, '+
-    'not where affected voters live. Click a dot for one site, or an area for its list.</div>';
-  panel(html, false);
+    'not where affected voters live.<br><br>Source: Tarrant County Elections vote center and '+
+    'early voting rosters, Nov 2022 and Nov 2026.</div>';
 }
 function select(z){
-  state.sel=z; state.site=null;
+  state.sel=z;
   zipLayer.eachLayer(function(l){
     if(l.feature.properties.z===z){ l.setStyle({weight:3,color:'#02090A',fillOpacity:.88});
       l.bringToFront(); } else zipLayer.resetStyle(l);
@@ -1056,7 +973,7 @@ function select(z){
   var order={closed:0,added:1,kept:2};
   ss.sort(function(x,y){return order[x.s]-order[y.s] || x.n.localeCompare(y.n);});
   var shown=ss.filter(function(s){return state[s.s];});
-  panel(
+  document.getElementById('det').innerHTML =
     '<div class="hd">'+z+'</div><div class="sub">'+(D.zips[z]?D.zips[z].city:'')+'</div>'+
     '<div class="stat"><div><b>'+a.y22+'</b><i>2022</i></div>'+
     '<div><b>'+a.y26+'</b><i>2026</i></div>'+
@@ -1065,9 +982,10 @@ function select(z){
     (shown.length? '<h2>Sites ('+shown.length+' of '+ss.length+' shown)</h2>'+
       '<ul class="lst">'+shown.map(li).join('')+'</ul>'
       : '<div class="hint">No sites match the current filters in this ZIP.</div>')+
-    '<div class="note"><a href="#" id="backlink">Back to county overview</a></div>');
+    '<div class="note"><a href="#" id="backlink">Back to county overview</a></div>';
   var b=document.getElementById('backlink');
-  if(b) b.onclick=function(e){e.preventDefault(); clearSel(); overview();};
+  if(b) b.onclick=function(e){e.preventDefault();state.sel=null;
+    zipLayer.eachLayer(function(l){zipLayer.resetStyle(l);}); overview();};
 }
 
 /* ---------------- controls ---------------- */
@@ -1076,7 +994,7 @@ function restyle(){
   if(state.sel) zipLayer.eachLayer(function(l){
     if(l.feature.properties.z===state.sel) l.setStyle({weight:3,color:'#02090A'});});
   drawLegend(); renderKPIs(); drawPoints();
-  if(state.site) selectSite(state.site); else if(state.sel) select(state.sel); else overview();
+  state.sel ? select(state.sel) : overview();
 }
 function seg(id,key){
   document.querySelectorAll('#'+id+' button').forEach(function(b){
@@ -1091,34 +1009,28 @@ seg('prog','prog'); seg('metric','metric');
 ['closed','added','kept','hi'].forEach(function(k){
   document.getElementById('c-'+k).onchange=function(){
     state[k]=this.checked;
-    drawPoints(); if(state.site) selectSite(state.site); else if(state.sel) select(state.sel); else overview();
+    drawPoints(); state.sel?select(state.sel):overview();
   };
 });
 
-function wireSearch(si, rs){
+var si=document.getElementById('search'), rs=document.getElementById('results');
 si.oninput=function(){
   var q=this.value.trim().toLowerCase();
-  if(q.length<2){rs.innerHTML='';rs.style.display='none';return;}
+  if(q.length<2){rs.innerHTML='';return;}
   var hits=D.sites.filter(function(s){return s.p===state.prog &&
     (s.n.toLowerCase().indexOf(q)>-1 || s.a.toLowerCase().indexOf(q)>-1);}).slice(0,25);
   rs.innerHTML = hits.length ? hits.map(function(s,i){
-    return '<div data-i="'+i+'"><span class="tag t-'+s.s+'">'+s.s+'</span>'+s.n+
+    return '<div data-z="'+s.z+'"><span class="tag t-'+s.s+'">'+s.s+'</span>'+s.n+
            '<br><span class="z">'+s.a+', '+s.c+' '+s.z+'</span></div>';}).join('')
     : '<div class="z" style="padding:5px">No match in this programme.</div>';
-  rs.style.display='block';
-  rs.querySelectorAll('div[data-i]').forEach(function(d){
+  rs.querySelectorAll('div[data-z]').forEach(function(d){
     d.onclick=function(){
-      var s=hits[+d.dataset.i], c=D.coords[s.n+'|'+s.a];
-      rs.style.display='none'; si.value='';
-      if(c){ map.setView([c[0],c[1]], 14); selectSite(s); }
-      else { var z=D.cent[s.z]; if(z) map.setView(z,13); select(s.z); }
+      var z=d.dataset.z, c=D.cent[z];
+      if(c) map.setView(c, 13);
+      select(z);
     };
   });
 };
-si.onblur=function(){ setTimeout(function(){ rs.style.display='none'; }, 180); };
-}
-wireSearch(document.getElementById('search'), document.getElementById('results'));
-wireSearch(document.getElementById('search2'), document.getElementById('results2'));
 
 function ptnote(){
   document.getElementById('ptnote').innerHTML = hasCoords()
@@ -1127,30 +1039,6 @@ function ptnote(){
       'Run <code>geocode_sites.py</code> to build it. Lists and shading work without it.';
 }
 ptnote();
-/* ---------------- full screen ---------------- */
-(function(){
-  var btn = document.getElementById('fs'), lab = document.getElementById('fslabel');
-  var root = document.documentElement;
-  function on(){ return document.fullscreenElement || document.webkitFullscreenElement; }
-  function supported(){
-    return !!(root.requestFullscreen || root.webkitRequestFullscreen);
-  }
-  function sync(){
-    var f = !!on();
-    lab.textContent = f ? 'Exit full screen' : 'Full screen';
-    btn.title = lab.textContent;
-    setTimeout(function(){ map.invalidateSize(); }, 120);
-  }
-  btn.addEventListener('click', function(e){
-    if(!supported() || !(document.fullscreenEnabled || document.webkitFullscreenEnabled)) return;
-    e.preventDefault();
-    if(on()){ (document.exitFullscreen || document.webkitExitFullscreen).call(document); }
-    else { (root.requestFullscreen || root.webkitRequestFullscreen).call(root); }
-  });
-  document.addEventListener('fullscreenchange', sync);
-  document.addEventListener('webkitfullscreenchange', sync);
-})();
-
 drawLegend(); renderKPIs(); overview(); drawPoints();
 
 /* Pins: use inline D.coords if present, else fetch the sidecar file. */
