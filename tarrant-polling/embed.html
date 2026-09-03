@@ -709,6 +709,8 @@ html,body{margin:0;height:100%;font-family:var(--sans);color:var(--ink);backgrou
 /* ---------- controls: a bar, not an overlay ---------- */
 #ctl{flex:none;background:var(--wash);border-bottom:1px solid var(--line);
   padding:9px 14px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+#ctl2{flex:none;background:var(--wash);border-bottom:1px solid var(--line);
+  padding:0 14px 9px;display:none;position:relative}
 .grp{display:flex;align-items:center;gap:7px}
 .grp>label{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--mute);
   font-weight:700;white-space:nowrap}
@@ -724,12 +726,14 @@ html,body{margin:0;height:100%;font-family:var(--sans);color:var(--ink);backgrou
 .opt .ct{font-size:11px;color:var(--mute);font-variant-numeric:tabular-nums}
 #search{width:180px;padding:5px 9px;border:1px solid var(--ink);font:inherit;font-size:12px;
   background:#fff}
-#results{position:absolute;z-index:900;background:#fff;border:1px solid var(--ink);
+#results,#results2{position:absolute;z-index:900;background:#fff;border:1px solid var(--ink);
   max-height:210px;overflow:auto;width:300px;display:none;box-shadow:0 4px 14px rgba(2,9,10,.2)}
-#results div{padding:6px 9px;font-size:12px;cursor:pointer;line-height:1.35;
+#results div,#results2 div{padding:6px 9px;font-size:12px;cursor:pointer;line-height:1.35;
   border-bottom:1px solid var(--line)}
-#results div:hover{background:var(--wash)}
-#results .z{color:var(--mute);font-size:11px}
+#results div:hover,#results2 div:hover{background:var(--wash)}
+#results .z,#results2 .z{color:var(--mute);font-size:11px}
+#search2{width:100%;padding:8px 10px;border:1px solid var(--ink);font:inherit;font-size:16px;background:#fff}
+#results2{width:calc(100% - 28px)}
 
 /* ---------- legend, the only thing left on the map ---------- */
 #lg{position:absolute;left:10px;bottom:10px;z-index:800;background:rgba(255,255,255,.95);
@@ -770,13 +774,36 @@ html,body{margin:0;height:100%;font-family:var(--sans);color:var(--ink);backgrou
   padding-top:8px;border-top:1px solid var(--line)}
 .note a{color:var(--ink2)}
 .mk{border-radius:50%}
-@media (max-width:820px){
+@media (max-width:900px){
+  #hdr{padding:9px 12px;gap:10px}
+  #hdr h1{font-size:13px}
   #hdr .kpis{display:none}
-  #ctl{gap:10px;padding:8px 10px}
   .grp>label{display:none}
-  #search{width:130px}
-  #det{max-height:42%}
+  #ctl{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;gap:12px;padding:8px 12px;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none}
+  #ctl::-webkit-scrollbar{display:none}
+  .grp{flex:none}
+  .grp:last-child{display:none}          /* search moves to its own row */
+  #ctl2{display:block}
+  #ctl2 #search{width:100%;padding:8px 10px;font-size:16px}  /* 16px stops iOS zoom */
+  #results{width:calc(100% - 28px);left:14px;right:14px}
+  .seg button{padding:8px 12px}
+  .opt{padding:4px 0}
+  .opt input{width:17px;height:17px}
+  #map{min-height:240px}
+  #lg{left:8px;bottom:8px;padding:6px 8px}
+  #lgramp,#lgticks{width:132px}
+  #det{max-height:44%;padding:10px 12px 12px}
+  #det .hd{font-size:16px;padding-right:64px}
   .lst{grid-template-columns:1fr}
+}
+@media (max-width:420px){
+  #lg{display:none}                      /* legend crowds a small map */
+  #hdr h1 span{display:none}
+}
+@media (max-height:520px){
+  #det{max-height:50%}
+  #map{min-height:160px}
 }
 </style></head><body>
 <div id="wrap">
@@ -820,6 +847,11 @@ html,body{margin:0;height:100%;font-family:var(--sans);color:var(--ink);backgrou
       <input id="search" placeholder="Find a site...">
       <div id="results"></div>
     </div>
+  </div>
+
+  <div id="ctl2">
+    <input id="search2" placeholder="Find a site...">
+    <div id="results2"></div>
   </div>
 
   <div id="map">
@@ -927,6 +959,12 @@ function drawPoints(){
   });
 }
 map.on('zoomend',drawPoints);
+(function(){
+  var t;
+  function resize(){ clearTimeout(t); t=setTimeout(function(){ map.invalidateSize(); }, 150); }
+  window.addEventListener('resize', resize);
+  window.addEventListener('orientationchange', resize);
+})();
 map.createPane('pins');
 map.getPane('pins').style.zIndex=640;
 
@@ -1052,7 +1090,7 @@ seg('prog','prog'); seg('metric','metric');
   };
 });
 
-var si=document.getElementById('search'), rs=document.getElementById('results');
+function wireSearch(si, rs){
 si.oninput=function(){
   var q=this.value.trim().toLowerCase();
   if(q.length<2){rs.innerHTML='';rs.style.display='none';return;}
@@ -1072,6 +1110,10 @@ si.oninput=function(){
     };
   });
 };
+si.onblur=function(){ setTimeout(function(){ rs.style.display='none'; }, 180); };
+}
+wireSearch(document.getElementById('search'), document.getElementById('results'));
+wireSearch(document.getElementById('search2'), document.getElementById('results2'));
 
 function ptnote(){
   document.getElementById('ptnote').innerHTML = hasCoords()
