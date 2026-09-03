@@ -688,7 +688,7 @@ html,body{margin:0;height:100%;font-family:var(--sans);color:var(--ink);backgrou
 #map{position:absolute;inset:0}
 .leaflet-container{background:#ECEFF1;font-family:var(--sans)}
 /* Mute the OSM basemap so the choropleth reads on top of it.
-   Remove this rule for full-colour standard OSM. */
+   Remove this rule for full-color standard OSM. */
 .leaflet-tile-pane{filter:grayscale(.92) brightness(1.06) contrast(.92);opacity:.85}
 
 /* ---------- header ---------- */
@@ -701,6 +701,12 @@ html,body{margin:0;height:100%;font-family:var(--sans);color:var(--ink);backgrou
 .kpi b{display:block;font-size:16px;font-weight:700}
 .kpi i{font-style:normal;font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:#B3B5B5}
 .kpi.neg b{color:#E45E4F} .kpi.pos b{color:#8FCF77}
+#filt{display:inline-flex;align-items:center;gap:6px;background:transparent;color:#fff;
+  border:1px solid #ffffff40;padding:5px 10px;font:inherit;font-size:12px;cursor:pointer;
+  white-space:nowrap;flex:none;order:-1}
+#filt:hover{border-color:#fff;background:#ffffff14}
+#filt[aria-expanded=false]{background:#ffffff1f}
+#ctl.collapsed{display:none}
 
 /* ---------- panels ---------- */
 .pnl{position:absolute;z-index:800;background:var(--panel);border:1px solid var(--line);
@@ -764,7 +770,9 @@ html,body{margin:0;height:100%;font-family:var(--sans);color:var(--ink);backgrou
 .note a{color:var(--ink2)}
 .mk{border-radius:50%;border:1.5px solid #fff;box-shadow:0 0 0 1px rgba(16,32,58,.35)}
 @media (max-width:820px){
-  #ctl{width:190px} #det{display:none} #hdr .kpis{display:none}
+  #hdr .kpis{display:none}
+  #ctl{top:auto;bottom:12px;left:12px;right:12px;width:auto;max-height:46%;overflow:auto}
+  #det{top:auto;bottom:12px;left:12px;right:12px;width:auto;max-height:52%}
 }
 </style></head><body>
 <div id="wrap">
@@ -777,7 +785,7 @@ html,body{margin:0;height:100%;font-family:var(--sans);color:var(--ink);backgrou
   </div>
 
   <div class="pnl" id="ctl">
-    <h2>Programme</h2>
+    <h2>Program</h2>
     <div class="seg" id="prog">
       <button data-v="ed" aria-pressed="true">Election Day</button>
       <button data-v="ev" aria-pressed="false">Early voting</button>
@@ -825,7 +833,7 @@ var D = {"zips":{"75050":{"city":"Grand Prairie","ed":{"y22":1,"y26":1},"ev":{"y
 /* ---------------- helpers ---------------- */
 var RAMP = ['#FCFCFD','#FBE8E5','#F7D1CC','#E45E4F','#d91a04','#560A01'];
 var DIV  = ['#2d7a10','#8FCF77','#E5E9EC','#F7D1CC','#E45E4F','#d91a04','#560A01'];
-var state = {prog:'ed', metric:'frac', closed:true, added:true, kept:false, hi:false, sel:null};
+var state = {prog:'ed', metric:'frac', closed:true, added:true, kept:false, hi:false, sel:null, site:null};
 
 function agg(z,p){ return D.zips[z] ? D.zips[z][p] : {y22:0,y26:0}; }
 function sitesIn(z,p){ return D.sites.filter(function(s){return s.z===z && s.p===p;}); }
@@ -908,8 +916,7 @@ function drawPoints(){
     if(!c) return;
     L.circleMarker([c[0],c[1]],{radius:r,className:'mk',fillColor:COL[s.s],
       fillOpacity:.92,color:'#fff',weight:1.4,pane:'pins'})
-     .bindPopup('<b>'+s.n+'</b><br>'+s.a+'<br>'+s.c+' '+s.z+
-                '<br><span class="tag t-'+s.s+'">'+s.s+'</span>')
+     .on('click', function(e){ L.DomEvent.stop(e); selectSite(s); })
      .addTo(ptLayer);
   });
 }
@@ -938,6 +945,24 @@ function renderKPIs(){
     D.sites.filter(function(s){return s.p===state.prog&&s.h;}).length;
 }
 
+function selectSite(s){
+  state.site = s;
+  var a = agg(s.z, s.p), prog = s.p==='ed' ? 'Election Day' : 'Early voting';
+  document.getElementById('det').innerHTML =
+    '<div class="hd">'+s.n+'</div>'+
+    '<div class="sub">'+s.a+', '+s.c+' '+s.z+'</div>'+
+    '<div style="margin:2px 0 9px"><span class="tag t-'+s.s+'">'+s.s+'</span>'+
+    (s.h?'<span class="tag t-hi">college</span>':'')+
+    '<span style="font-size:11px;color:#808484">'+prog+'</span></div>'+
+    '<div class="hint">ZIP '+s.z+' went from <b>'+a.y22+'</b> sites in 2022 to <b>'+a.y26+'</b> in 2026.</div>'+
+    '<div class="note"><a href="#" id="sitezip">All sites in '+s.z+'</a> &middot; '+
+    '<a href="#" id="sitehome">County overview</a></div>';
+  var z=document.getElementById('sitezip');
+  if(z) z.onclick=function(e){e.preventDefault(); select(s.z);};
+  var hm=document.getElementById('sitehome');
+  if(hm) hm.onclick=function(e){e.preventDefault(); state.sel=null; state.site=null;
+    zipLayer.eachLayer(function(l){zipLayer.resetStyle(l);}); overview();};
+}
 function li(s){
   return '<li><span class="tag t-'+s.s+'">'+s.s+'</span>'+
     (s.h?'<span class="tag t-hi">college</span>':'')+
@@ -964,7 +989,7 @@ function overview(){
     'early voting rosters, Nov 2022 and Nov 2026.</div>';
 }
 function select(z){
-  state.sel=z;
+  state.sel=z; state.site=null;
   zipLayer.eachLayer(function(l){
     if(l.feature.properties.z===z){ l.setStyle({weight:3,color:'#02090A',fillOpacity:.88});
       l.bringToFront(); } else zipLayer.resetStyle(l);
@@ -994,7 +1019,7 @@ function restyle(){
   if(state.sel) zipLayer.eachLayer(function(l){
     if(l.feature.properties.z===state.sel) l.setStyle({weight:3,color:'#02090A'});});
   drawLegend(); renderKPIs(); drawPoints();
-  state.sel ? select(state.sel) : overview();
+  if(state.site) selectSite(state.site); else if(state.sel) select(state.sel); else overview();
 }
 function seg(id,key){
   document.querySelectorAll('#'+id+' button').forEach(function(b){
@@ -1009,7 +1034,7 @@ seg('prog','prog'); seg('metric','metric');
 ['closed','added','kept','hi'].forEach(function(k){
   document.getElementById('c-'+k).onchange=function(){
     state[k]=this.checked;
-    drawPoints(); state.sel?select(state.sel):overview();
+    drawPoints(); if(state.site) selectSite(state.site); else if(state.sel) select(state.sel); else overview();
   };
 });
 
@@ -1022,7 +1047,7 @@ si.oninput=function(){
   rs.innerHTML = hits.length ? hits.map(function(s,i){
     return '<div data-z="'+s.z+'"><span class="tag t-'+s.s+'">'+s.s+'</span>'+s.n+
            '<br><span class="z">'+s.a+', '+s.c+' '+s.z+'</span></div>';}).join('')
-    : '<div class="z" style="padding:5px">No match in this programme.</div>';
+    : '<div class="z" style="padding:5px">No match in this program.</div>';
   rs.querySelectorAll('div[data-z]').forEach(function(d){
     d.onclick=function(){
       var z=d.dataset.z, c=D.cent[z];
@@ -1039,6 +1064,16 @@ function ptnote(){
       'Run <code>geocode_sites.py</code> to build it. Lists and shading work without it.';
 }
 ptnote();
+(function(){
+  var b=document.getElementById('filt'), p=document.getElementById('ctl');
+  function set(open){
+    p.classList.toggle('collapsed', !open);
+    b.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  set(window.innerWidth > 820);          // closed by default on phones
+  b.onclick=function(){ set(p.classList.contains('collapsed')); };
+})();
+
 drawLegend(); renderKPIs(); overview(); drawPoints();
 
 /* Pins: use inline D.coords if present, else fetch the sidecar file. */
