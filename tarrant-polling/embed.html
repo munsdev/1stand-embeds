@@ -702,7 +702,7 @@ html,body{margin:0;height:100%;font-family:var(--sans);color:var(--ink);backgrou
 .kpi b{display:block;font-size:17px;font-weight:700}
 .kpi i{font-style:normal;font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:#B3B5B5}
 .kpi.neg b{color:#E45E4F} .kpi.pos b{color:#69CFD8}
-#fs{display:inline-flex;align-items:center;gap:6px;background:transparent;color:#fff;
+#fs{text-decoration:none;display:inline-flex;align-items:center;gap:6px;background:transparent;color:#fff;
   border:1px solid #ffffff40;padding:6px 11px;font:inherit;font-size:12px;cursor:pointer;
   white-space:nowrap;flex:none}
 #fs:hover{border-color:#fff;background:#ffffff14}
@@ -751,12 +751,9 @@ html,body{margin:0;height:100%;font-family:var(--sans);color:var(--ink);backgrou
 /* ---------- detail: a drawer under the map ---------- */
 /* Detail panel: side drawer on desktop, bottom sheet on phones. Overlays the
    map, so nothing behind it ever moves. */
-#det{position:absolute;z-index:700;background:#fff;overflow:auto;
-  padding:13px 16px 16px;-webkit-overflow-scrolling:touch;
-  transition:transform .22s ease;will-change:transform}
-#det{top:0;right:0;bottom:0;width:360px;border-left:2px solid var(--ink);
-  transform:translateX(101%);box-shadow:-6px 0 18px rgba(2,9,10,.14)}
-#det.open{transform:none}
+#det{flex:0 0 180px;height:180px;background:#fff;border-top:2px solid var(--ink);
+  overflow-y:auto;overflow-x:hidden;padding:11px 16px 14px;
+  -webkit-overflow-scrolling:touch;position:relative}
 #detclose{position:sticky;float:right;top:0;margin:-4px -4px 0 8px;border:1px solid var(--line);background:#fff;
   font:inherit;font-size:11px;padding:3px 9px;cursor:pointer;color:var(--ink2)}
 #detclose:hover{border-color:var(--ink);color:var(--ink)}
@@ -800,11 +797,7 @@ html,body{margin:0;height:100%;font-family:var(--sans);color:var(--ink);backgrou
   .opt input{width:17px;height:17px}
   #lg{left:8px;top:8px;bottom:auto;padding:6px 8px}
   #lgramp,#lgticks{width:132px}
-  #det{top:auto;left:0;right:0;bottom:0;width:auto;height:58%;
-    border-left:0;border-top:2px solid var(--ink);
-    transform:translateY(101%);box-shadow:0 -6px 18px rgba(2,9,10,.18);
-    padding:10px 13px 16px}
-  #det.open{transform:none}
+  #det{flex-basis:170px;height:170px;padding:10px 13px 14px}
   #det .hd{font-size:16px}
   .lst{grid-template-columns:1fr}
 }
@@ -812,8 +805,8 @@ html,body{margin:0;height:100%;font-family:var(--sans);color:var(--ink);backgrou
   #lg{display:none}                      /* legend crowds a small map */
   #hdr h1 span{display:none}
 }
-@media (max-height:560px) and (max-width:900px){
-  #det{height:66%}
+@media (max-height:560px){
+  #det{flex-basis:140px;height:140px}
 }
 </style></head><body>
 <div id="wrap">
@@ -822,11 +815,11 @@ html,body{margin:0;height:100%;font-family:var(--sans);color:var(--ink);backgrou
     <h1>Tarrant County polling sites, 2022 to 2026
       <span>149 Election Day sites closed, 56 opened. The reported 92 is the net.</span></h1>
     <div class="kpis" id="kpis"></div>
-    <button id="fs" title="Full screen">
+    <a id="fs" href="./embed.html" target="_blank" rel="noopener" title="Full screen">
       <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path fill="currentColor"
         d="M1 1h6v2H3v4H1V1zm14 0v6h-2V3H9V1h6zM1 9h2v4h4v2H1V9zm12 0h2v6H9v-2h4V9z"/></svg>
       <span id="fslabel">Full screen</span>
-    </button>
+    </a>
   </div>
 
   <div id="ctl">
@@ -871,8 +864,8 @@ html,body{margin:0;height:100%;font-family:var(--sans);color:var(--ink);backgrou
       <div id="lgramp"></div>
       <div id="lgticks"></div>
     </div>
-    <div id="det"></div>
   </div>
+  <div id="det"></div>
 </div>
 
 <script>
@@ -999,11 +992,10 @@ function renderKPIs(){
     D.sites.filter(function(s){return s.p===state.prog&&s.h;}).length;
 }
 
-function panel(html){
+function panel(html, withClose){
   var d = document.getElementById('det');
-  d.innerHTML = '<button id="detclose">Close</button>' + html;
+  d.innerHTML = (withClose === false ? '' : '<button id="detclose">Back</button>') + html;
   d.scrollTop = 0;
-  d.classList.add('open');
   var b = document.getElementById('detclose');
   if(b) b.onclick = function(){ closePanel(); };
 }
@@ -1011,10 +1003,7 @@ function clearSel(){
   state.sel = null; state.site = null;
   zipLayer.eachLayer(function(l){ zipLayer.resetStyle(l); });
 }
-function closePanel(){
-  clearSel();
-  document.getElementById('det').classList.remove('open');
-}
+function closePanel(){ clearSel(); overview(); }
 function selectSite(s){
   state.site = s;
   var a = agg(s.z, s.p);
@@ -1037,7 +1026,7 @@ function li(s){
     (s.h?'<span class="tag t-hi">college</span>':'')+
     '<span class="nm">'+s.n+'</span><br><span class="ad">'+s.a+', '+s.c+'</span></li>';
 }
-function overview(quiet){
+function overview(){
   var t=countyTotals(state.prog), y22=t.closed+t.kept, y26=t.added+t.kept;
   var lbl = state.prog==='ed' ? 'Election Day' : 'Early voting';
   var hi = D.sites.filter(function(s){return s.p===state.prog&&s.h&&s.s==='closed';});
@@ -1055,11 +1044,7 @@ function overview(quiet){
     '<div class="note">Click any ZIP area for its site list. Tarrant uses countywide vote '+
     'centers, so any voter may use any site: shading shows where capacity was withdrawn, '+
     'not where affected voters live. Click a dot for one site, or an area for its list.</div>';
-  if(quiet){ document.getElementById('det').innerHTML =
-    '<button id="detclose">Close</button>' + html;
-    var b0 = document.getElementById('detclose');
-    if(b0) b0.onclick = function(){ closePanel(); };
-  } else { panel(html); }
+  panel(html, false);
 }
 function select(z){
   state.sel=z; state.site=null;
@@ -1082,7 +1067,7 @@ function select(z){
       : '<div class="hint">No sites match the current filters in this ZIP.</div>')+
     '<div class="note"><a href="#" id="backlink">Back to county overview</a></div>');
   var b=document.getElementById('backlink');
-  if(b) b.onclick=function(e){e.preventDefault(); clearSel(); overview(false);};
+  if(b) b.onclick=function(e){e.preventDefault(); clearSel(); overview();};
 }
 
 /* ---------------- controls ---------------- */
@@ -1091,7 +1076,7 @@ function restyle(){
   if(state.sel) zipLayer.eachLayer(function(l){
     if(l.feature.properties.z===state.sel) l.setStyle({weight:3,color:'#02090A'});});
   drawLegend(); renderKPIs(); drawPoints();
-  if(state.site) selectSite(state.site); else if(state.sel) select(state.sel); else overview(true);
+  if(state.site) selectSite(state.site); else if(state.sel) select(state.sel); else overview();
 }
 function seg(id,key){
   document.querySelectorAll('#'+id+' button').forEach(function(b){
@@ -1106,7 +1091,7 @@ seg('prog','prog'); seg('metric','metric');
 ['closed','added','kept','hi'].forEach(function(k){
   document.getElementById('c-'+k).onchange=function(){
     state[k]=this.checked;
-    drawPoints(); if(state.site) selectSite(state.site); else if(state.sel) select(state.sel); else overview(true);
+    drawPoints(); if(state.site) selectSite(state.site); else if(state.sel) select(state.sel); else overview();
   };
 });
 
@@ -1156,20 +1141,17 @@ ptnote();
     btn.title = lab.textContent;
     setTimeout(function(){ map.invalidateSize(); }, 120);
   }
-  btn.onclick = function(){
-    if(!supported()){ window.open(location.href, '_blank', 'noopener'); return; }
-    if(on()){
-      (document.exitFullscreen || document.webkitExitFullscreen).call(document);
-    } else {
-      var p = (root.requestFullscreen || root.webkitRequestFullscreen).call(root);
-      if(p && p.catch) p.catch(function(){ window.open(location.href, '_blank', 'noopener'); });
-    }
-  };
+  btn.addEventListener('click', function(e){
+    if(!supported() || !(document.fullscreenEnabled || document.webkitFullscreenEnabled)) return;
+    e.preventDefault();
+    if(on()){ (document.exitFullscreen || document.webkitExitFullscreen).call(document); }
+    else { (root.requestFullscreen || root.webkitRequestFullscreen).call(root); }
+  });
   document.addEventListener('fullscreenchange', sync);
   document.addEventListener('webkitfullscreenchange', sync);
 })();
 
-drawLegend(); renderKPIs(); overview(true); drawPoints();
+drawLegend(); renderKPIs(); overview(); drawPoints();
 
 /* Pins: use inline D.coords if present, else fetch the sidecar file. */
 if(!hasCoords()){
