@@ -699,6 +699,12 @@ html,body{margin:0;height:100%;font-family:var(--sans);color:var(--ink);backgrou
 .kpi b{display:block;font-size:17px;font-weight:700}
 .kpi i{font-style:normal;font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:#B3B5B5}
 .kpi.neg b{color:#E45E4F} .kpi.pos b{color:#69CFD8}
+#fs{display:inline-flex;align-items:center;gap:6px;background:transparent;color:#fff;
+  border:1px solid #ffffff40;padding:6px 11px;font:inherit;font-size:12px;cursor:pointer;
+  white-space:nowrap;flex:none}
+#fs:hover{border-color:#fff;background:#ffffff14}
+#fs svg{flex:none}
+:fullscreen #wrap,:-webkit-full-screen #wrap{height:100vh}
 
 /* ---------- controls: a bar, not an overlay ---------- */
 #ctl{flex:none;background:var(--wash);border-bottom:1px solid var(--line);
@@ -779,6 +785,11 @@ html,body{margin:0;height:100%;font-family:var(--sans);color:var(--ink);backgrou
     <h1>Tarrant County polling sites, 2022 to 2026
       <span>149 Election Day sites closed, 56 opened. The reported 92 is the net.</span></h1>
     <div class="kpis" id="kpis"></div>
+    <button id="fs" title="Full screen">
+      <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path fill="currentColor"
+        d="M1 1h6v2H3v4H1V1zm14 0v6h-2V3H9V1h6zM1 9h2v4h4v2H1V9zm12 0h2v6H9v-2h4V9z"/></svg>
+      <span id="fslabel">Full screen</span>
+    </button>
   </div>
 
   <div id="ctl">
@@ -1069,6 +1080,33 @@ function ptnote(){
       'Run <code>geocode_sites.py</code> to build it. Lists and shading work without it.';
 }
 ptnote();
+/* ---------------- full screen ---------------- */
+(function(){
+  var btn = document.getElementById('fs'), lab = document.getElementById('fslabel');
+  var root = document.documentElement;
+  function on(){ return document.fullscreenElement || document.webkitFullscreenElement; }
+  function supported(){
+    return !!(root.requestFullscreen || root.webkitRequestFullscreen);
+  }
+  function sync(){
+    var f = !!on();
+    lab.textContent = f ? 'Exit full screen' : 'Full screen';
+    btn.title = lab.textContent;
+    setTimeout(function(){ map.invalidateSize(); }, 120);
+  }
+  btn.onclick = function(){
+    if(!supported()){ window.open(location.href, '_blank', 'noopener'); return; }
+    if(on()){
+      (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    } else {
+      var p = (root.requestFullscreen || root.webkitRequestFullscreen).call(root);
+      if(p && p.catch) p.catch(function(){ window.open(location.href, '_blank', 'noopener'); });
+    }
+  };
+  document.addEventListener('fullscreenchange', sync);
+  document.addEventListener('webkitfullscreenchange', sync);
+})();
+
 drawLegend(); renderKPIs(); overview(); drawPoints();
 
 /* Pins: use inline D.coords if present, else fetch the sidecar file. */
