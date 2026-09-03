@@ -686,7 +686,10 @@ svg.leaflet-image-layer.leaflet-interactive path {
 html,body{margin:0;height:100%;font-family:var(--sans);color:var(--ink);background:var(--bg)}
 #wrap{position:relative;height:100%;min-height:520px;display:flex;flex-direction:column;
   overflow:hidden;background:#fff}
-#map{flex:1 1 auto;min-height:180px}
+/* The stage is a fixed box. The map fills it and never resizes; the detail
+   panel floats over it, the way Google Maps and Zillow handle this. */
+#stage{position:relative;flex:1 1 auto;min-height:0;overflow:hidden}
+#map{position:absolute;top:0;right:0;bottom:0;left:0}
 .leaflet-container{background:#ECEFF1;font-family:var(--sans)}
 
 /* ---------- top bar ---------- */
@@ -736,7 +739,7 @@ html,body{margin:0;height:100%;font-family:var(--sans);color:var(--ink);backgrou
 #results2{width:calc(100% - 28px)}
 
 /* ---------- legend, the only thing left on the map ---------- */
-#lg{position:absolute;left:10px;bottom:10px;z-index:800;background:rgba(255,255,255,.95);
+#lg{position:absolute;left:10px;bottom:10px;z-index:600;background:rgba(255,255,255,.95);
   border:1px solid var(--ink);padding:8px 10px;font-size:11px;color:var(--ink2)}
 #lg .ttl{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--mute);
   font-weight:700;margin-bottom:5px}
@@ -746,10 +749,15 @@ html,body{margin:0;height:100%;font-family:var(--sans);color:var(--ink);backgrou
   font-variant-numeric:tabular-nums;font-size:10px}
 
 /* ---------- detail: a drawer under the map ---------- */
-#det{flex:none;border-top:2px solid var(--ink);background:#fff;max-height:34%;
-  overflow:auto;padding:11px 14px 13px;position:relative}
-#det.hidden{display:none}
-#detclose{position:absolute;top:8px;right:10px;border:1px solid var(--line);background:#fff;
+/* Detail panel: side drawer on desktop, bottom sheet on phones. Overlays the
+   map, so nothing behind it ever moves. */
+#det{position:absolute;z-index:700;background:#fff;overflow:auto;
+  padding:13px 16px 16px;-webkit-overflow-scrolling:touch;
+  transition:transform .22s ease;will-change:transform}
+#det{top:0;right:0;bottom:0;width:360px;border-left:2px solid var(--ink);
+  transform:translateX(101%);box-shadow:-6px 0 18px rgba(2,9,10,.14)}
+#det.open{transform:none}
+#detclose{position:sticky;float:right;top:0;margin:-4px -4px 0 8px;border:1px solid var(--line);background:#fff;
   font:inherit;font-size:11px;padding:3px 9px;cursor:pointer;color:var(--ink2)}
 #detclose:hover{border-color:var(--ink);color:var(--ink)}
 #det .hd{font-size:17px;font-weight:700;line-height:1.2;padding-right:70px}
@@ -790,20 +798,22 @@ html,body{margin:0;height:100%;font-family:var(--sans);color:var(--ink);backgrou
   .seg button{padding:8px 12px}
   .opt{padding:4px 0}
   .opt input{width:17px;height:17px}
-  #map{min-height:240px}
-  #lg{left:8px;bottom:8px;padding:6px 8px}
+  #lg{left:8px;top:8px;bottom:auto;padding:6px 8px}
   #lgramp,#lgticks{width:132px}
-  #det{max-height:44%;padding:10px 12px 12px}
-  #det .hd{font-size:16px;padding-right:64px}
+  #det{top:auto;left:0;right:0;bottom:0;width:auto;height:58%;
+    border-left:0;border-top:2px solid var(--ink);
+    transform:translateY(101%);box-shadow:0 -6px 18px rgba(2,9,10,.18);
+    padding:10px 13px 16px}
+  #det.open{transform:none}
+  #det .hd{font-size:16px}
   .lst{grid-template-columns:1fr}
 }
 @media (max-width:420px){
   #lg{display:none}                      /* legend crowds a small map */
   #hdr h1 span{display:none}
 }
-@media (max-height:520px){
-  #det{max-height:50%}
-  #map{min-height:160px}
+@media (max-height:560px) and (max-width:900px){
+  #det{height:66%}
 }
 </style></head><body>
 <div id="wrap">
@@ -854,15 +864,15 @@ html,body{margin:0;height:100%;font-family:var(--sans);color:var(--ink);backgrou
     <div id="results2"></div>
   </div>
 
-  <div id="map">
+  <div id="stage">
+    <div id="map"></div>
     <div id="lg">
       <div class="ttl" id="lgttl">Share of 2022 sites lost</div>
       <div id="lgramp"></div>
       <div id="lgticks"></div>
     </div>
+    <div id="det"></div>
   </div>
-
-  <div id="det"></div>
 </div>
 
 <script>
@@ -991,14 +1001,19 @@ function renderKPIs(){
 
 function panel(html){
   var d = document.getElementById('det');
-  d.classList.remove('hidden');
   d.innerHTML = '<button id="detclose">Close</button>' + html;
+  d.scrollTop = 0;
+  d.classList.add('open');
   var b = document.getElementById('detclose');
-  if(b) b.onclick = function(){ clearSel(); overview(); };
+  if(b) b.onclick = function(){ closePanel(); };
 }
 function clearSel(){
   state.sel = null; state.site = null;
   zipLayer.eachLayer(function(l){ zipLayer.resetStyle(l); });
+}
+function closePanel(){
+  clearSel();
+  document.getElementById('det').classList.remove('open');
 }
 function selectSite(s){
   state.site = s;
@@ -1022,11 +1037,11 @@ function li(s){
     (s.h?'<span class="tag t-hi">college</span>':'')+
     '<span class="nm">'+s.n+'</span><br><span class="ad">'+s.a+', '+s.c+'</span></li>';
 }
-function overview(){
+function overview(quiet){
   var t=countyTotals(state.prog), y22=t.closed+t.kept, y26=t.added+t.kept;
   var lbl = state.prog==='ed' ? 'Election Day' : 'Early voting';
   var hi = D.sites.filter(function(s){return s.p===state.prog&&s.h&&s.s==='closed';});
-  panel(
+  var html =
     '<div class="hd">Tarrant County</div>'+
     '<div class="sub">'+lbl+' polling sites</div>'+
     '<div class="stat"><div><b>'+y22+'</b><i>2022</i></div>'+
@@ -1039,7 +1054,12 @@ function overview(){
       hi.map(li).join('')+'</ul>' : '')+
     '<div class="note">Click any ZIP area for its site list. Tarrant uses countywide vote '+
     'centers, so any voter may use any site: shading shows where capacity was withdrawn, '+
-    'not where affected voters live. Click a dot for one site, or an area for its list.</div>');
+    'not where affected voters live. Click a dot for one site, or an area for its list.</div>';
+  if(quiet){ document.getElementById('det').innerHTML =
+    '<button id="detclose">Close</button>' + html;
+    var b0 = document.getElementById('detclose');
+    if(b0) b0.onclick = function(){ closePanel(); };
+  } else { panel(html); }
 }
 function select(z){
   state.sel=z; state.site=null;
@@ -1062,7 +1082,7 @@ function select(z){
       : '<div class="hint">No sites match the current filters in this ZIP.</div>')+
     '<div class="note"><a href="#" id="backlink">Back to county overview</a></div>');
   var b=document.getElementById('backlink');
-  if(b) b.onclick=function(e){e.preventDefault(); clearSel(); overview();};
+  if(b) b.onclick=function(e){e.preventDefault(); clearSel(); overview(false);};
 }
 
 /* ---------------- controls ---------------- */
@@ -1071,7 +1091,7 @@ function restyle(){
   if(state.sel) zipLayer.eachLayer(function(l){
     if(l.feature.properties.z===state.sel) l.setStyle({weight:3,color:'#02090A'});});
   drawLegend(); renderKPIs(); drawPoints();
-  if(state.site) selectSite(state.site); else if(state.sel) select(state.sel); else overview();
+  if(state.site) selectSite(state.site); else if(state.sel) select(state.sel); else overview(true);
 }
 function seg(id,key){
   document.querySelectorAll('#'+id+' button').forEach(function(b){
@@ -1086,7 +1106,7 @@ seg('prog','prog'); seg('metric','metric');
 ['closed','added','kept','hi'].forEach(function(k){
   document.getElementById('c-'+k).onchange=function(){
     state[k]=this.checked;
-    drawPoints(); if(state.site) selectSite(state.site); else if(state.sel) select(state.sel); else overview();
+    drawPoints(); if(state.site) selectSite(state.site); else if(state.sel) select(state.sel); else overview(true);
   };
 });
 
@@ -1149,7 +1169,7 @@ ptnote();
   document.addEventListener('webkitfullscreenchange', sync);
 })();
 
-drawLegend(); renderKPIs(); overview(); drawPoints();
+drawLegend(); renderKPIs(); overview(true); drawPoints();
 
 /* Pins: use inline D.coords if present, else fetch the sidecar file. */
 if(!hasCoords()){
